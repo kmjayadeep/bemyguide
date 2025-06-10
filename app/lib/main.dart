@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/ai_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -31,20 +35,43 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = false;
+  String _aiResponse = '';
 
-  void _handleSearch() {
+  void _handleSearch() async {
     String query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      // TODO: Implement search functionality
-      print('Searching for: $query');
+      setState(() {
+        _isLoading = true;
+        _aiResponse = '';
+      });
 
-      // Show a placeholder response for now
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Searching for: "$query"'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      try {
+        final response = await AiService.generateResponse(query);
+        setState(() {
+          _aiResponse = response;
+          _isLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -68,7 +95,7 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,6 +139,7 @@ class _HomePageState extends State<HomePage> {
                   TextField(
                     controller: _searchController,
                     onSubmitted: (_) => _handleSearch(),
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       hintText: 'What would you like to explore?',
                       hintStyle: TextStyle(
@@ -144,7 +172,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         ElevatedButton(
-                          onPressed: _handleSearch,
+                          onPressed: _isLoading ? null : _handleSearch,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.teal,
                             foregroundColor: Colors.white,
@@ -157,13 +185,25 @@ class _HomePageState extends State<HomePage> {
                             ),
                             elevation: 2,
                           ),
-                          child: const Text(
-                            'Search',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
+                          child:
+                              _isLoading
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                  : const Text(
+                                    'Search',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                         ),
                       ],
                     ),
@@ -171,6 +211,66 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+
+            // AI Response section
+            if (_aiResponse.isNotEmpty) ...[
+              const SizedBox(height: 30),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.teal[100]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.teal[50],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.smart_toy,
+                            color: Colors.teal[600],
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'BeMyGuide says:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.teal[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _aiResponse,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             const SizedBox(height: 30),
 
@@ -193,6 +293,8 @@ class _HomePageState extends State<HomePage> {
             _buildExampleChip(
               'Show me fun activities for a family with 10 year old kids',
             ),
+
+            const SizedBox(height: 100), // Extra space for bottom navigation
           ],
         ),
       ),
