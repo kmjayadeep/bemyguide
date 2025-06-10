@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
@@ -41,7 +40,6 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = false;
   List<PlaceSuggestion> _suggestions = [];
   Position? _currentPosition;
-  String _locationStatus = 'Location will be requested when you search';
   bool _hasRequestedLocation = false;
 
   void _handleSearch() async {
@@ -55,27 +53,17 @@ class _HomePageState extends State<HomePage> {
       // Get location if we haven't already
       if (_currentPosition == null) {
         try {
-          setState(() {
-            _locationStatus = 'Getting your location...';
-          });
-
           final position = await LocationService.getCurrentLocation();
           if (mounted) {
             setState(() {
               _currentPosition = position;
               _hasRequestedLocation = true;
-              if (position != null) {
-                _locationStatus =
-                    'Location found (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
-              }
             });
           }
         } catch (e) {
           if (mounted) {
             setState(() {
               _hasRequestedLocation = true;
-              _locationStatus =
-                  'Location unavailable - using Interlaken, Switzerland';
               // Set default location to Interlaken, Switzerland as fallback
               _currentPosition = Position(
                 latitude: 46.6863,
@@ -150,7 +138,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _refreshLocation() async {
     try {
       setState(() {
-        _locationStatus = 'Getting your location...';
         _currentPosition = null;
       });
 
@@ -159,18 +146,12 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _currentPosition = position;
           _hasRequestedLocation = true;
-          if (position != null) {
-            _locationStatus =
-                'Location found (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
-          }
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _hasRequestedLocation = true;
-          _locationStatus =
-              'Location unavailable - using Interlaken, Switzerland';
           // Set default location to Interlaken, Switzerland as fallback
           _currentPosition = Position(
             latitude: 46.6863,
@@ -635,15 +616,24 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _openWebsite(String url) async {
     try {
-      if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      final uri = Uri.parse(url);
+      final canLaunch = await canLaunchUrl(uri);
+
+      if (canLaunch) {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!launched) {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+        }
       } else {
-        await Clipboard.setData(ClipboardData(text: url));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Website URL copied to clipboard!'),
-              backgroundColor: Colors.teal,
+              content: Text('Cannot open website: $url'),
+              backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.all(16),
               shape: RoundedRectangleBorder(
@@ -654,12 +644,11 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      await Clipboard.setData(ClipboardData(text: url));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Website URL copied to clipboard!'),
-            backgroundColor: Colors.teal,
+            content: Text('Error opening website: $e'),
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
@@ -690,18 +679,24 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
-        await launchUrl(
-          Uri.parse(googleMapsUrl),
+      final uri = Uri.parse(googleMapsUrl);
+      final canLaunch = await canLaunchUrl(uri);
+
+      if (canLaunch) {
+        final launched = await launchUrl(
+          uri,
           mode: LaunchMode.externalApplication,
         );
+
+        if (!launched) {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+        }
       } else {
-        await Clipboard.setData(ClipboardData(text: googleMapsUrl));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Google Maps URL copied to clipboard!'),
-              backgroundColor: Colors.teal,
+              content: Text('Cannot open Google Maps: $googleMapsUrl'),
+              backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.all(16),
               shape: RoundedRectangleBorder(
@@ -712,12 +707,11 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      await Clipboard.setData(ClipboardData(text: googleMapsUrl));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Google Maps URL copied to clipboard!'),
-            backgroundColor: Colors.teal,
+            content: Text('Error opening Google Maps: $e'),
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
@@ -767,36 +761,41 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _openGitHubLink() async {
     const url = 'https://github.com/kmjayadeep/bemyguide';
+
     try {
-      if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      final uri = Uri.parse(url);
+      final canLaunch = await canLaunchUrl(uri);
+
+      if (canLaunch) {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!launched) {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+        }
       } else {
-        // Fallback to clipboard if can't launch URL
-        await Clipboard.setData(const ClipboardData(text: url));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('GitHub link copied to clipboard!'),
-              duration: const Duration(seconds: 2),
-              backgroundColor: Colors.teal,
+            const SnackBar(
+              content: Text('Cannot open GitHub link'),
+              backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
+              margin: EdgeInsets.all(16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
             ),
           );
         }
       }
     } catch (e) {
-      // Fallback to clipboard on any error
-      await Clipboard.setData(const ClipboardData(text: url));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('GitHub link copied to clipboard!'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.teal,
+            content: Text('Error opening GitHub: $e'),
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
