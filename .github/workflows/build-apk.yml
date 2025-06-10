@@ -42,9 +42,9 @@ jobs:
       working-directory: ./app
       run: flutter analyze
       
-    # - name: Run Flutter tests
-    #   working-directory: ./app
-    #   run: flutter test
+    - name: Run Flutter tests
+      working-directory: ./app
+      run: flutter test
       
     - name: Build APK
       working-directory: ./app
