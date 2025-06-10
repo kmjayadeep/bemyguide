@@ -82,10 +82,8 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: app/build/app/outputs/flutter-apk/app-release.apk
-        name: Release ${{ github.ref_name }}
+        name: BeMyGuide ${{ github.ref_name }}
         body: |
-          # BeMyGuide ${{ github.ref_name }}
-          
           ## 📱 Download
           - **APK**: `app-release.apk` (Android)
           
