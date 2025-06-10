@@ -8,6 +8,8 @@ class PlaceSuggestion {
   final String category;
   final double distanceKm;
   final String? websiteUrl;
+  final double? latitude;
+  final double? longitude;
 
   PlaceSuggestion({
     required this.name,
@@ -15,6 +17,8 @@ class PlaceSuggestion {
     required this.category,
     required this.distanceKm,
     this.websiteUrl,
+    this.latitude,
+    this.longitude,
   });
 
   factory PlaceSuggestion.fromJson(Map<String, dynamic> json) {
@@ -24,6 +28,14 @@ class PlaceSuggestion {
       category: json['category'] as String,
       distanceKm: (json['distance_km'] as num).toDouble(),
       websiteUrl: json['website_url'] as String?,
+      latitude:
+          json['latitude'] != null
+              ? (json['latitude'] as num).toDouble()
+              : null,
+      longitude:
+          json['longitude'] != null
+              ? (json['longitude'] as num).toDouble()
+              : null,
     );
   }
 }
@@ -57,7 +69,7 @@ class AiService {
             {
               'role': 'system',
               'content':
-                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. The current time is $currentTime. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', and \'website_url\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
+                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. The current time is $currentTime. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', \'website_url\', \'latitude\', and \'longitude\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. If you cannot find the exact coordinates, set \'latitude\' and \'longitude\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
             },
             {
               'role': 'user',

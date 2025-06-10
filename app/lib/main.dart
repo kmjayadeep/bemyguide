@@ -597,27 +597,76 @@ class _HomePageState extends State<HomePage> {
               height: 1.4,
             ),
           ),
-          if (suggestion.websiteUrl != null) ...[
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => _openWebsite(suggestion.websiteUrl!),
-              child: Row(
-                children: [
-                  Icon(Icons.link, size: 16, color: Colors.teal[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Visit website',
-                    style: TextStyle(
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Google Maps button
+              GestureDetector(
+                onTap:
+                    () => _openGoogleMaps(
+                      suggestion.name,
+                      suggestion.latitude,
+                      suggestion.longitude,
+                    ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[600],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.map, size: 14, color: Colors.white),
+                      const SizedBox(width: 5),
+                      const Text(
+                        'Maps',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (suggestion.websiteUrl != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _openWebsite(suggestion.websiteUrl!),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
                       color: Colors.teal[600],
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.link, size: 14, color: Colors.white),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'Website',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -668,6 +717,64 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Website URL copied to clipboard!'),
+            backgroundColor: Colors.teal,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openGoogleMaps(
+    String placeName,
+    double? latitude,
+    double? longitude,
+  ) async {
+    String googleMapsUrl;
+
+    if (latitude != null && longitude != null) {
+      // Use coordinates for precise location
+      googleMapsUrl =
+          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    } else {
+      // Fallback to search by name
+      final encodedName = Uri.encodeComponent(placeName);
+      googleMapsUrl =
+          'https://www.google.com/maps/search/?api=1&query=$encodedName';
+    }
+
+    try {
+      if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+        await launchUrl(
+          Uri.parse(googleMapsUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        await Clipboard.setData(ClipboardData(text: googleMapsUrl));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Google Maps URL copied to clipboard!'),
+              backgroundColor: Colors.teal,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      await Clipboard.setData(ClipboardData(text: googleMapsUrl));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Google Maps URL copied to clipboard!'),
             backgroundColor: Colors.teal,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
