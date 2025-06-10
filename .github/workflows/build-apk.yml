@@ -3,6 +3,8 @@ name: Build Flutter APK
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.0.1, etc.
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -46,13 +48,58 @@ jobs:
       working-directory: ./app
       run: flutter test
       
-    - name: Build APK
+    - name: Build Debug APK
+      if: ${{ !startsWith(github.ref, 'refs/tags/') }}
       working-directory: ./app
       run: flutter build apk --debug
       
-    - name: Upload APK
+    - name: Build Release APK
+      if: startsWith(github.ref, 'refs/tags/')
+      working-directory: ./app
+      run: flutter build apk --release
+      
+    - name: Upload Debug APK
+      if: ${{ !startsWith(github.ref, 'refs/tags/') }}
       uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk
         path: app/build/app/outputs/flutter-apk/app-debug.apk
         retention-days: 7
+        
+    - name: Upload Release APK as Artifact
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-apk
+        path: app/build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+        
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: app/build/app/outputs/flutter-apk/app-release.apk
+        name: Release ${{ github.ref_name }}
+        body: |
+          # BeMyGuide ${{ github.ref_name }}
+          
+          ## 📱 Download
+          - **APK**: `app-release.apk` (Android)
+          
+          ## 🔧 Build Info
+          - **Flutter Version**: 3.29.3
+          - **Build Type**: Release
+          - **Commit**: ${{ github.sha }}
+          
+          ## 📋 Installation
+          1. Download the APK file
+          2. Enable "Install from Unknown Sources" in Android settings
+          3. Install the APK on your device
+          
+          ---
+          *Generated automatically by GitHub Actions*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
