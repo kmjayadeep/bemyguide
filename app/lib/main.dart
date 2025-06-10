@@ -37,6 +37,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   bool _isLoading = false;
   List<PlaceSuggestion> _suggestions = [];
   Position? _currentPosition;
@@ -204,6 +205,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -296,6 +298,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   TextField(
                     controller: _searchController,
+                    focusNode: _searchFocusNode,
                     onSubmitted: (_) => _handleSearch(),
                     enabled: !_isLoading,
                     decoration: InputDecoration(
@@ -730,6 +733,7 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () {
         _searchController.text = text;
+        _searchFocusNode.requestFocus();
       },
       child: Container(
         width: double.infinity,
