@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:geolocator/geolocator.dart';
 import 'services/ai_service.dart';
+import 'services/location_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +39,9 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
   List<PlaceSuggestion> _suggestions = [];
+  Position? _currentPosition;
+  String _locationStatus = 'Location will be requested when you search';
+  bool _hasRequestedLocation = false;
 
   void _handleSearch() async {
     String query = _searchController.text.trim();
@@ -46,31 +51,152 @@ class _HomePageState extends State<HomePage> {
         _suggestions = [];
       });
 
-      try {
-        final suggestions = await AiService.generateResponse(query);
+      // Get location if we haven't already
+      if (_currentPosition == null) {
+        try {
+          setState(() {
+            _locationStatus = 'Getting your location...';
+          });
+
+          final position = await LocationService.getCurrentLocation();
+          if (mounted) {
+            setState(() {
+              _currentPosition = position;
+              _hasRequestedLocation = true;
+              if (position != null) {
+                _locationStatus =
+                    'Location found (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+              }
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _hasRequestedLocation = true;
+              _locationStatus =
+                  'Location unavailable - using Interlaken, Switzerland';
+              // Set default location to Interlaken, Switzerland as fallback
+              _currentPosition = Position(
+                latitude: 46.6863,
+                longitude: 7.8632,
+                timestamp: DateTime.now(),
+                accuracy: 0,
+                altitude: 0,
+                altitudeAccuracy: 0,
+                heading: 0,
+                headingAccuracy: 0,
+                speed: 0,
+                speedAccuracy: 0,
+              );
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Location error: $e'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        }
+      }
+
+      // Now proceed with the search
+      if (_currentPosition != null) {
+        try {
+          final suggestions = await AiService.generateResponse(
+            query,
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+          );
+          setState(() {
+            _suggestions = suggestions;
+            _isLoading = false;
+          });
+        } catch (e) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        }
+      } else {
         setState(() {
-          _suggestions = suggestions;
           _isLoading = false;
         });
-      } catch (e) {
+      }
+    }
+  }
+
+  Future<void> _refreshLocation() async {
+    try {
+      setState(() {
+        _locationStatus = 'Getting your location...';
+        _currentPosition = null;
+      });
+
+      final position = await LocationService.getCurrentLocation();
+      if (mounted) {
         setState(() {
-          _isLoading = false;
+          _currentPosition = position;
+          _hasRequestedLocation = true;
+          if (position != null) {
+            _locationStatus =
+                'Location found (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasRequestedLocation = true;
+          _locationStatus =
+              'Location unavailable - using Interlaken, Switzerland';
+          // Set default location to Interlaken, Switzerland as fallback
+          _currentPosition = Position(
+            latitude: 46.6863,
+            longitude: 7.8632,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location error: $e'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          );
-        }
+          ),
+        );
       }
     }
   }
@@ -94,13 +220,73 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.my_location),
+            onPressed: _refreshLocation,
+            tooltip: 'Get location',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
+            // Location status - only show if location has been requested
+            if (_hasRequestedLocation) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      _currentPosition != null
+                          ? Colors.green[50]
+                          : Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color:
+                        _currentPosition != null
+                            ? Colors.green[200]!
+                            : Colors.orange[200]!,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _currentPosition != null
+                          ? Icons.location_on
+                          : Icons.location_off,
+                      size: 16,
+                      color:
+                          _currentPosition != null
+                              ? Colors.green[600]
+                              : Colors.orange[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _locationStatus,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color:
+                              _currentPosition != null
+                                  ? Colors.green[700]
+                                  : Colors.orange[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            const SizedBox(height: 20),
             // Welcome message
             const Text(
               'Welcome to BeMyGuide!',
@@ -112,7 +298,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your AI-powered local guide for Vernier, Geneva. Ask me anything about nearby attractions, restaurants, or activities.',
+              'Your AI-powered local guide. Ask me anything about nearby attractions, restaurants, or activities.',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -212,11 +398,44 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
+            // Info about location request
+            if (!_hasRequestedLocation) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'We\'ll request your location when you search to provide personalized recommendations',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // Place Suggestions section
             if (_suggestions.isNotEmpty) ...[
               const SizedBox(height: 30),
               Text(
-                'Found ${_suggestions.length} suggestions for you:',
+                'Found ${_suggestions.length} suggestions near you:',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,

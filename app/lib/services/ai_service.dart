@@ -37,15 +37,14 @@ class AiService {
 
   static Future<List<PlaceSuggestion>> generateResponse(
     String userQuery,
+    double userLatitude,
+    double userLongitude,
   ) async {
     if (_baseUrl.isEmpty || _token.isEmpty) {
       throw Exception('Cloudflare AI credentials not configured');
     }
 
     try {
-      // Default location for Vernier, Geneva, Switzerland
-      final double userLatitude = 46.2180;
-      final double userLongitude = 6.0882;
       final String currentTime = DateTime.now().toString();
 
       final response = await http.post(
@@ -64,7 +63,7 @@ class AiService {
             {
               'role': 'user',
               'content':
-                  'User query: \'$userQuery\'. My current location is latitude $userLatitude and longitude $userLongitude. I am currently in Vernier, Geneva, Switzerland.',
+                  'User query: \'$userQuery\'. My current location is latitude $userLatitude and longitude $userLongitude.',
             },
           ],
           'max_tokens': 800,

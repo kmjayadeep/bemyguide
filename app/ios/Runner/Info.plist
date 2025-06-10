@@ -45,5 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Location permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BeMyGuide needs access to your location to provide personalized recommendations for nearby attractions, restaurants, and activities.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BeMyGuide needs access to your location to provide personalized recommendations for nearby attractions, restaurants, and activities.</string>
 </dict>
 </plist>
