@@ -36,28 +36,16 @@ class AiService {
   static String get _token => dotenv.env['CLOUDFLARE_AI_TOKEN'] ?? '';
 
   static Future<List<PlaceSuggestion>> generateResponse(
-    String userQuery, {
-    double? userLatitude,
-    double? userLongitude,
-    String? locationName,
-  }) async {
+    String userQuery,
+    double userLatitude,
+    double userLongitude,
+  ) async {
     if (_baseUrl.isEmpty || _token.isEmpty) {
       throw Exception('Cloudflare AI credentials not configured');
     }
 
     try {
       final String currentTime = DateTime.now().toString();
-
-      // Build location context
-      String locationContext;
-      if (locationName != null && locationName.isNotEmpty) {
-        locationContext = 'I am currently in $locationName.';
-      } else if (userLatitude != null && userLongitude != null) {
-        locationContext =
-            'My current location is latitude $userLatitude and longitude $userLongitude.';
-      } else {
-        throw Exception('Either location name or coordinates must be provided');
-      }
 
       final response = await http.post(
         Uri.parse(_baseUrl),
@@ -74,7 +62,8 @@ class AiService {
             },
             {
               'role': 'user',
-              'content': 'User query: \'$userQuery\'. $locationContext',
+              'content':
+                  'User query: \'$userQuery\'. My current location is latitude $userLatitude and longitude $userLongitude.',
             },
           ],
           'max_tokens': 800,
