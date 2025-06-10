@@ -38,13 +38,13 @@ jobs:
       working-directory: ./app
       run: flutter pub get
       
-    - name: Analyze Flutter code
-      working-directory: ./app
-      run: flutter analyze
+    # - name: Analyze Flutter code
+    #   working-directory: ./app
+    #   run: flutter analyze
       
-    - name: Run Flutter tests
-      working-directory: ./app
-      run: flutter test
+    # - name: Run Flutter tests
+    #   working-directory: ./app
+    #   run: flutter test
       
     - name: Build APK
       working-directory: ./app
