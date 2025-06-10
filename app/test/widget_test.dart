@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:app/main.dart';
+import 'package:bemyguide/main.dart';
 
 void main() {
   testWidgets('BeMyGuide app loads correctly', (WidgetTester tester) async {
