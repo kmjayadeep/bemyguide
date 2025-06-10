@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Build outputs
+build-output/
+app/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies that will be installed in container
+app/.dart_tool/
+app/.packages
+
+# Flutter/Dart
+app/ios/
+app/macos/
+app/windows/
+app/web/
+app/linux/
+app/test/ 

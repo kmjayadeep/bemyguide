@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  flutter-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bemyguide-apk-builder
+    volumes:
+      # Mount the app source code
+      - ./app:/workspace:rw
+      # Mount output directory for built APKs
+      - ./build-output:/workspace/output:rw
+      # Mount gradle cache for faster builds
+      - gradle-cache:/root/.gradle
+      # Mount Flutter cache
+      - flutter-cache:/root/.flutter
+    environment:
+      - FLUTTER_ROOT=/opt/flutter
+      - ANDROID_HOME=/opt/android-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    working_dir: /workspace
+    command: /usr/local/bin/build-apk.sh
+
+  # Interactive service for development and debugging
+  flutter-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bemyguide-dev
+    volumes:
+      - ./app:/workspace:rw
+      - ./build-output:/workspace/output:rw
+      - gradle-cache:/root/.gradle
+      - flutter-cache:/root/.flutter
+    environment:
+      - FLUTTER_ROOT=/opt/flutter
+      - ANDROID_HOME=/opt/android-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    working_dir: /workspace
+    command: tail -f /dev/null
+    stdin_open: true
+    tty: true
+
+volumes:
+  gradle-cache:
+  flutter-cache: 
