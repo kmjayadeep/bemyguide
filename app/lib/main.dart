@@ -37,11 +37,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   bool _isLoading = false;
   List<PlaceSuggestion> _suggestions = [];
   Position? _currentPosition;
   String _locationStatus = 'Location will be requested when you search';
   bool _hasRequestedLocation = false;
+  bool _isEditingLocation = false;
+  bool _useManualLocation = false;
 
   void _handleSearch() async {
     String query = _searchController.text.trim();
@@ -107,12 +110,17 @@ class _HomePageState extends State<HomePage> {
       }
 
       // Now proceed with the search
-      if (_currentPosition != null) {
+      if (_currentPosition != null ||
+          (_useManualLocation && _locationController.text.trim().isNotEmpty)) {
         try {
           final suggestions = await AiService.generateResponse(
             query,
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
+            userLatitude:
+                _useManualLocation ? null : _currentPosition?.latitude,
+            userLongitude:
+                _useManualLocation ? null : _currentPosition?.longitude,
+            locationName:
+                _useManualLocation ? _locationController.text.trim() : null,
           );
           setState(() {
             _suggestions = suggestions;
@@ -144,6 +152,14 @@ class _HomePageState extends State<HomePage> {
         });
       }
     }
+  }
+
+  void _clearAll() {
+    setState(() {
+      _searchController.clear();
+      _suggestions = [];
+      // Keep location data intact - no need to re-request permission
+    });
   }
 
   Future<void> _refreshLocation() async {
@@ -204,6 +220,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -221,6 +238,11 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _clearAll,
+            tooltip: 'Clear search results',
+          ),
           IconButton(
             icon: const Icon(Icons.my_location),
             onPressed: _refreshLocation,
@@ -357,6 +379,21 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        if (_suggestions.isNotEmpty) ...[
+                          TextButton.icon(
+                            onPressed: _clearAll,
+                            icon: const Icon(Icons.clear, size: 18),
+                            label: const Text('Clear'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey[600],
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         ElevatedButton(
                           onPressed: _isLoading ? null : _handleSearch,
                           style: ElevatedButton.styleFrom(
