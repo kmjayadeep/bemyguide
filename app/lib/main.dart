@@ -219,8 +219,33 @@ class _HomePageState extends State<HomePage> {
           'BeMyGuide',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        centerTitle: true,
+        centerTitle: false,
         actions: [
+          if (_hasRequestedLocation && _currentPosition != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Your Location',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.my_location),
             onPressed: _refreshLocation,
