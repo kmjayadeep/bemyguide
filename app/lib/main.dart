@@ -36,20 +36,20 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
-  String _aiResponse = '';
+  List<PlaceSuggestion> _suggestions = [];
 
   void _handleSearch() async {
     String query = _searchController.text.trim();
     if (query.isNotEmpty) {
       setState(() {
         _isLoading = true;
-        _aiResponse = '';
+        _suggestions = [];
       });
 
       try {
-        final response = await AiService.generateResponse(query);
+        final suggestions = await AiService.generateResponse(query);
         setState(() {
-          _aiResponse = response;
+          _suggestions = suggestions;
           _isLoading = false;
         });
       } catch (e) {
@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your AI-powered local guide. Ask me anything about nearby attractions, restaurants, or activities.',
+              'Your AI-powered local guide for Vernier, Geneva. Ask me anything about nearby attractions, restaurants, or activities.',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -212,64 +212,21 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // AI Response section
-            if (_aiResponse.isNotEmpty) ...[
+            // Place Suggestions section
+            if (_suggestions.isNotEmpty) ...[
               const SizedBox(height: 30),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  border: Border.all(color: Colors.teal[100]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.teal[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.smart_toy,
-                            color: Colors.teal[600],
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'BeMyGuide says:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.teal[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _aiResponse,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black87,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Found ${_suggestions.length} suggestions for you:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
                 ),
               ),
+              const SizedBox(height: 16),
+              ...(_suggestions
+                  .map((suggestion) => _buildSuggestionCard(suggestion))
+                  .toList()),
             ],
 
             const SizedBox(height: 30),
@@ -356,6 +313,152 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Widget _buildSuggestionCard(PlaceSuggestion suggestion) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getCategoryColor(suggestion.category),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  suggestion.category,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 4),
+              Text(
+                '${suggestion.latitude.toStringAsFixed(4)}, ${suggestion.longitude.toStringAsFixed(4)}',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            suggestion.name,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            suggestion.description,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+          ),
+          if (suggestion.websiteUrl != null) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => _openWebsite(suggestion.websiteUrl!),
+              child: Row(
+                children: [
+                  Icon(Icons.link, size: 16, color: Colors.teal[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Visit website',
+                    style: TextStyle(
+                      color: Colors.teal[600],
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'restaurant':
+        return Colors.orange;
+      case 'park':
+        return Colors.green;
+      case 'museum':
+        return Colors.purple;
+      case 'activity':
+        return Colors.blue;
+      case 'landmark':
+        return Colors.red;
+      case 'shopping':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Future<void> _openWebsite(String url) async {
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        await Clipboard.setData(ClipboardData(text: url));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Website URL copied to clipboard!'),
+              backgroundColor: Colors.teal,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      await Clipboard.setData(ClipboardData(text: url));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Website URL copied to clipboard!'),
+            backgroundColor: Colors.teal,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildExampleChip(String text) {
