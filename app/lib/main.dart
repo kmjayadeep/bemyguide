@@ -233,59 +233,6 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Location status - only show if location has been requested
-            if (_hasRequestedLocation) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      _currentPosition != null
-                          ? Colors.green[50]
-                          : Colors.orange[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color:
-                        _currentPosition != null
-                            ? Colors.green[200]!
-                            : Colors.orange[200]!,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _currentPosition != null
-                          ? Icons.location_on
-                          : Icons.location_off,
-                      size: 16,
-                      color:
-                          _currentPosition != null
-                              ? Colors.green[600]
-                              : Colors.orange[600],
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _locationStatus,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              _currentPosition != null
-                                  ? Colors.green[700]
-                                  : Colors.orange[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-
             const SizedBox(height: 20),
             // Welcome message
             const Text(
@@ -397,39 +344,6 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-
-            // Info about location request
-            if (!_hasRequestedLocation) ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'We\'ll request your location when you search to provide personalized recommendations',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
 
             // Place Suggestions section
             if (_suggestions.isNotEmpty) ...[
