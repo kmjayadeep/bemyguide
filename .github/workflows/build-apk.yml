@@ -1,0 +1,66 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Create .env file
+      working-directory: ./app
+      run: |
+        echo "CLOUDFLARE_AI_URL=${{ secrets.CLOUDFLARE_AI_URL }}" >> .env
+        echo "CLOUDFLARE_AI_TOKEN=${{ secrets.CLOUDFLARE_AI_TOKEN }}" >> .env
+        
+    - name: Get Flutter dependencies
+      working-directory: ./app
+      run: flutter pub get
+      
+    - name: Analyze Flutter code
+      working-directory: ./app
+      run: flutter analyze
+      
+    - name: Run Flutter tests
+      working-directory: ./app
+      run: flutter test
+      
+    - name: Build APK
+      working-directory: ./app
+      run: flutter build apk --release
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: app/build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+        
+    - name: Upload APK to release (on tag)
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: app/build/app/outputs/flutter-apk/app-release.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
