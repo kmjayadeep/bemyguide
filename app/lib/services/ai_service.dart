@@ -6,16 +6,14 @@ class PlaceSuggestion {
   final String name;
   final String description;
   final String category;
-  final double latitude;
-  final double longitude;
+  final double distanceKm;
   final String? websiteUrl;
 
   PlaceSuggestion({
     required this.name,
     required this.description,
     required this.category,
-    required this.latitude,
-    required this.longitude,
+    required this.distanceKm,
     this.websiteUrl,
   });
 
@@ -24,8 +22,7 @@ class PlaceSuggestion {
       name: json['name'] as String,
       description: json['description'] as String,
       category: json['category'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
+      distanceKm: (json['distance_km'] as num).toDouble(),
       websiteUrl: json['website_url'] as String?,
     );
   }
@@ -58,7 +55,7 @@ class AiService {
             {
               'role': 'system',
               'content':
-                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. The current time is $currentTime. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'latitude\', \'longitude\', and \'website_url\'. The \'description\' should be a concise, one-sentence summary. If you cannot find a website, set \'website_url\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
+                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. The current time is $currentTime. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', and \'website_url\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
             },
             {
               'role': 'user',

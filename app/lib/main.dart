@@ -463,7 +463,7 @@ class _HomePageState extends State<HomePage> {
             _buildExampleChip('Find nearby restaurants that serve vegan food'),
             const SizedBox(height: 8),
             _buildExampleChip(
-              'What attractions are close to me that I can reach by foot?',
+              'What attractions are close to Eiffel Tower that I can reach by foot?',
             ),
             const SizedBox(height: 8),
             _buildExampleChip(
@@ -571,10 +571,10 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+              Icon(Icons.directions_walk, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
               Text(
-                '${suggestion.latitude.toStringAsFixed(4)}, ${suggestion.longitude.toStringAsFixed(4)}',
+                '${suggestion.distanceKm.toStringAsFixed(1)} km away',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
