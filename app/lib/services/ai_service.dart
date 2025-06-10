@@ -38,7 +38,9 @@ class AiService {
     double userLongitude,
   ) async {
     if (_baseUrl.isEmpty || _token.isEmpty) {
-      throw Exception('Cloudflare AI credentials not configured');
+      throw Exception(
+        'Cloudflare AI credentials not configured. Please check your .env file and ensure CLOUDFLARE_AI_URL and CLOUDFLARE_AI_TOKEN are set.',
+      );
     }
 
     try {
