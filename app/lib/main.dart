@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
 
             // Search input section
             Container(
@@ -461,16 +461,16 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 16),
             _buildExampleChip('Find nearby restaurants that serve vegan food'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             _buildExampleChip(
               'What attractions are close to Eiffel Tower that I can reach by foot?',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             _buildExampleChip(
               'Show me fun activities for a family with 10 year old kids',
             ),
 
-            const SizedBox(height: 100), // Extra space for bottom navigation
+            const SizedBox(height: 80), // Extra space for bottom navigation
           ],
         ),
       ),
@@ -686,6 +686,7 @@ class _HomePageState extends State<HomePage> {
         _searchController.text = text;
       },
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.teal[50],
@@ -696,12 +697,16 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(Icons.lightbulb_outline, size: 18, color: Colors.teal[600]),
             const SizedBox(width: 12),
-            Text(
-              text,
-              style: TextStyle(
-                color: Colors.teal[700],
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: Colors.teal[700],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
