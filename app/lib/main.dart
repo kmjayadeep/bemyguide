@@ -198,6 +198,10 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/icon.png', width: 32, height: 32),
+        ),
         title: const Text(
           'BeMyGuide',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
