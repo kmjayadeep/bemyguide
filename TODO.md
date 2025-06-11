@@ -39,6 +39,8 @@
 
 ## 📱 Android Production Setup
 
+Follow https://docs.flutter.dev/deployment/android
+
 ### Build Configuration
 - [ ] **Update build.gradle**: Set proper `minSdk` (21+), `targetSdk` (34+), `compileSdk` (34+)
 - [ ] **Version management**: Implement semantic versioning and build number automation

@@ -39,6 +39,20 @@ jobs:
         echo "CLOUDFLARE_AI_BASE_URL=${{ secrets.CLOUDFLARE_AI_BASE_URL }}" >> .env
         echo "CLOUDFLARE_AI_TOKEN=${{ secrets.CLOUDFLARE_AI_TOKEN }}" >> .env
         echo "CLOUDFLARE_AI_MODEL=${{ secrets.CLOUDFLARE_AI_MODEL }}" >> .env
+
+    - name: Setup Release Keystore
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        # Decode base64 keystore and save it
+        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > upload-keystore.jks
+
+        # Create key.properties file for release signing
+        cat > app/android/key.properties << EOF
+        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword=${{ secrets.KEY_PASSWORD }}
+        keyAlias=${{ secrets.KEY_ALIAS }}
+        storeFile=../../upload-keystore.jks
+        EOF
         
     - name: Get Flutter dependencies
       working-directory: ./app
@@ -78,6 +92,12 @@ jobs:
         path: app/build/app/outputs/flutter-apk/app-release.apk
         retention-days: 30
 
+    - name: Clean up keystore files
+      if: always() && startsWith(github.ref, 'refs/tags/')
+      run: |
+        rm -f upload-keystore.jks
+        rm -f app/android/key.properties
+
     - uses: ncipollo/release-action@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
@@ -89,7 +109,7 @@ jobs:
 
           ## 🔧 Build Info
           - **Flutter Version**: 3.29.3
-          - **Build Type**: Release
+          - **Build Type**: Release (Signed with keystore)
           - **Commit**: ${{ github.sha }}
 
           ## 📋 Installation
