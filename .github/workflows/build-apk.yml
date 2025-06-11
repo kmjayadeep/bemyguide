@@ -43,15 +43,15 @@ jobs:
     - name: Setup Release Keystore
       if: startsWith(github.ref, 'refs/tags/')
       run: |
-        # Decode base64 keystore and save it in the app/android directory
-        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > app/android/upload-keystore.jks
+        # Decode base64 keystore and save it in runner temp directory
+        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > ${{ runner.temp }}/keystore.jks
 
         # Create key.properties file for release signing
         cat > app/android/key.properties << EOF
         storePassword=${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword=${{ secrets.KEY_PASSWORD }}
         keyAlias=${{ secrets.KEY_ALIAS }}
-        storeFile=upload-keystore.jks
+        storeFile=${{ runner.temp }}/keystore.jks
         EOF
         
     - name: Get Flutter dependencies
@@ -95,7 +95,7 @@ jobs:
     - name: Clean up keystore files
       if: always() && startsWith(github.ref, 'refs/tags/')
       run: |
-        rm -f app/android/upload-keystore.jks
+        rm -f ${{ runner.temp }}/keystore.jks
         rm -f app/android/key.properties
 
     - uses: ncipollo/release-action@v1
