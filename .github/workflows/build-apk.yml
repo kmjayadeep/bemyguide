@@ -36,8 +36,9 @@ jobs:
     - name: Create .env file
       working-directory: ./app
       run: |
-        echo "CLOUDFLARE_AI_URL=${{ secrets.CLOUDFLARE_AI_URL }}" >> .env
+        echo "CLOUDFLARE_AI_BASE_URL=${{ secrets.CLOUDFLARE_AI_BASE_URL }}" >> .env
         echo "CLOUDFLARE_AI_TOKEN=${{ secrets.CLOUDFLARE_AI_TOKEN }}" >> .env
+        echo "CLOUDFLARE_AI_MODEL=${{ secrets.CLOUDFLARE_AI_MODEL }}" >> .env
         
     - name: Get Flutter dependencies
       working-directory: ./app
