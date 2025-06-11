@@ -41,8 +41,22 @@ class PlaceSuggestion {
 }
 
 class AiService {
-  static String get _baseUrl => dotenv.env['CLOUDFLARE_AI_URL'] ?? '';
+  static String get _baseUrl => dotenv.env['CLOUDFLARE_AI_BASE_URL'] ?? '';
   static String get _token => dotenv.env['CLOUDFLARE_AI_TOKEN'] ?? '';
+  static String get _modelName =>
+      dotenv.env['CLOUDFLARE_AI_MODEL'] ??
+      'workers-ai/@cf/meta/llama-3.1-8b-instruct';
+
+  /// Constructs the full API URL by combining base URL with model name
+  static String get _fullApiUrl {
+    if (_baseUrl.isEmpty) return '';
+    // Remove trailing slash from base URL if present, then add model name
+    final cleanBaseUrl =
+        _baseUrl.endsWith('/')
+            ? _baseUrl.substring(0, _baseUrl.length - 1)
+            : _baseUrl;
+    return '$cleanBaseUrl/$_modelName';
+  }
 
   static Future<List<PlaceSuggestion>> generateResponse(
     String userQuery,
@@ -51,15 +65,20 @@ class AiService {
   ) async {
     if (_baseUrl.isEmpty || _token.isEmpty) {
       throw Exception(
-        'Cloudflare AI credentials not configured. Please check your .env file and ensure CLOUDFLARE_AI_URL and CLOUDFLARE_AI_TOKEN are set.',
+        'Cloudflare AI credentials not configured. Please check your .env file and ensure CLOUDFLARE_AI_BASE_URL and CLOUDFLARE_AI_TOKEN are set.',
+      );
+    }
+
+    final apiUrl = _fullApiUrl;
+    if (apiUrl.isEmpty) {
+      throw Exception(
+        'Failed to construct API URL. Check your CLOUDFLARE_AI_BASE_URL configuration.',
       );
     }
 
     try {
-      final String currentTime = DateTime.now().toString();
-
       final response = await http.post(
-        Uri.parse(_baseUrl),
+        Uri.parse(apiUrl),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
@@ -69,7 +88,7 @@ class AiService {
             {
               'role': 'system',
               'content':
-                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. The current time is $currentTime. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', \'website_url\', \'latitude\', and \'longitude\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. If you cannot find the exact coordinates, set \'latitude\' and \'longitude\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
+                  'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', \'website_url\', \'latitude\', and \'longitude\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. If you cannot find the exact coordinates, set \'latitude\' and \'longitude\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.',
             },
             {
               'role': 'user',
