@@ -113,3 +113,11 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
    ```
 3. Update `wrangler.toml` with your namespace IDs
 4. Deploy: `wrangler deploy`
+
+## 🛠️ Docker Setup Details
+
+The Docker setup uses:
+- **Latest Node.js**: Always up-to-date Node.js LTS
+- **Wrangler CLI**: Pre-installed globally
+- **User Mapping**: Container user matches your host UID/GID to prevent permission issues
+- **Volume Mount**: Backend folder mounted to `/workspace` in container
