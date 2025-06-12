@@ -5,6 +5,7 @@ import type { Context, Next } from "hono";
 
 interface CloudflareBindings {
   JWT_SECRET: string;
+  RATE_LIMITER: KVNamespace;
 }
 
 interface LocationQuery {
@@ -26,6 +27,17 @@ interface ApiResponse {
   data?: PlaceRecommendation[];
   error?: string;
 }
+
+interface RateLimitData {
+  count: number;
+  resetAt: number;
+}
+
+// Rate limit configuration
+const RATE_LIMIT = {
+  MAX_REQUESTS: 30,
+  WINDOW_MINUTES: 60,
+};
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -72,8 +84,78 @@ const jwtAuth = async (c: Context, next: Next) => {
   }
 };
 
+// Rate limiting middleware
+const rateLimiter = async (c: Context, next: Next) => {
+  try {
+    const user = c.get('user');
+    const deviceId = user.sub;
+    
+    if (!deviceId) {
+      return c.json({ success: false, error: "Invalid user identity" }, 401);
+    }
+    
+    const key = `rate_limit:${deviceId}`;
+    const now = Date.now();
+    const windowMs = RATE_LIMIT.WINDOW_MINUTES * 60 * 1000;
+    const resetAt = now + windowMs;
+    
+    // Get current rate limit data from KV
+    const storedData = await c.env.RATE_LIMITER.get(key, 'json') as RateLimitData | null;
+    
+    if (storedData) {
+      // Check if the window has expired
+      if (now > storedData.resetAt) {
+        // Reset counter for new window
+        await c.env.RATE_LIMITER.put(key, JSON.stringify({
+          count: 1,
+          resetAt: resetAt
+        }), { expirationTtl: RATE_LIMIT.WINDOW_MINUTES * 60 });
+      } else {
+        // Window still active
+        if (storedData.count >= RATE_LIMIT.MAX_REQUESTS) {
+          // Rate limit exceeded
+          const retryAfterSeconds = Math.ceil((storedData.resetAt - now) / 1000);
+          return c.json({
+            success: false,
+            error: `Rate limit exceeded. Try again in ${retryAfterSeconds} seconds.`
+          }, 429, {
+            'Retry-After': retryAfterSeconds.toString()
+          });
+        }
+        
+        // Increment counter
+        await c.env.RATE_LIMITER.put(key, JSON.stringify({
+          count: storedData.count + 1,
+          resetAt: storedData.resetAt
+        }), { expirationTtl: Math.ceil((storedData.resetAt - now) / 1000) });
+      }
+    } else {
+      // First request in this window
+      await c.env.RATE_LIMITER.put(key, JSON.stringify({
+        count: 1,
+        resetAt: resetAt
+      }), { expirationTtl: RATE_LIMIT.WINDOW_MINUTES * 60 });
+    }
+    
+    // Add rate limit headers
+    const remaining = storedData ? 
+      Math.max(0, RATE_LIMIT.MAX_REQUESTS - storedData.count) : 
+      RATE_LIMIT.MAX_REQUESTS - 1;
+    
+    c.header('X-RateLimit-Limit', RATE_LIMIT.MAX_REQUESTS.toString());
+    c.header('X-RateLimit-Remaining', remaining.toString());
+    c.header('X-RateLimit-Reset', Math.ceil((storedData?.resetAt || resetAt) / 1000).toString());
+    
+    await next();
+  } catch (error) {
+    console.error("Rate limiting error:", error);
+    // Continue even if rate limiting fails (failsafe)
+    await next();
+  }
+};
+
 // Main API endpoint for location-based recommendations (protected)
-app.post("/api/recommendations", jwtAuth, async (c) => {
+app.post("/api/recommendations", jwtAuth, rateLimiter, async (c) => {
   try {
     const body = await c.req.json() as LocationQuery;
     // Validate request body

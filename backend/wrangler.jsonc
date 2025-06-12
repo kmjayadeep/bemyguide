@@ -7,10 +7,6 @@
 	"name": "bemyguide-backend",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-06-12",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./public"
-	},
 	"observability": {
 		"enabled": true
 	},
@@ -52,8 +48,15 @@
 		"dev": {
 			"vars": {
 				"JWT_SECRET": "test123"
-			}
+			},
+			"kv_namespaces": [
+				{ "binding": "bmg_rate_dev", "id": "15dca02380b947b7b3e12939ef668e73" }
+			]
 		},
-		"production": {}
+		"production": {
+			"kv_namespaces": [
+				{ "binding": "bmg_rate", "id": "a541886710dd46c398e943da1d684490" }
+			]
+		}
 	}
 }

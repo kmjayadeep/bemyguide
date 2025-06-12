@@ -74,9 +74,9 @@ npm install -g wrangler
 wrangler login
 
 # Create KV namespaces
-wrangler kv:namespace create "RATE_LIMITER"
-wrangler kv:namespace create "USER_SESSIONS"
-# Update wrangler.toml with your namespace IDs
+wrangler kv:namespace create "bmg-rate-dev"
+wrangler kv:namespace create "bmg-rate"
+# Update wrangler.jsonc with your namespace IDs in the env.dev and env.production sections
 
 # Deploy backend
 wrangler deploy
@@ -138,6 +138,32 @@ curl -X POST http://localhost:8787/api/recommendations \
 # Test health check
 curl http://localhost:8787/health
 ```
+
+### Test Rate Limiting
+```bash
+# Get a JWT token with a consistent device ID
+TOKEN=$(curl -s -X POST http://localhost:8787/api/auth/anonymous \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId": "test-device-123"}' | jq -r .token)
+
+# Make multiple requests in a loop to trigger rate limiting
+for i in {1..12}; do
+  echo "Request $i:"
+  curl -s -X POST http://localhost:8787/api/recommendations \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{
+      "query": "Find nearby restaurants",
+      "latitude": 40.7128,
+      "longitude": -74.0060
+    }' | jq '.success, .error, ."X-RateLimit-Remaining"'
+  echo ""
+  # Small delay between requests
+  sleep 1
+done
+```
+
+After 10 requests, you should see a rate limit error with a 429 status code.
 
 ### Test Deployed Backend
 ```bash
@@ -223,9 +249,23 @@ Try asking BeMyGuide:
 
 ## ⚙️ Configuration
 
-**Rate Limiting**: 10 requests/15min (configurable in `wrangler.toml`)  
+**Rate Limiting**: 10 requests/15min (configurable in `wrangler.jsonc`)  
 **AI Model**: `@cf/meta/llama-3.1-8b-instruct` (configurable)  
 **Deployment**: `wrangler deploy --env production`
+
+### Rate Limiting
+
+The app implements device-based rate limiting:
+
+- Each device is limited to 10 requests per 15-minute window
+- Rate limits are tracked in Cloudflare KV using the device ID as the key
+- When rate limit is exceeded, the API returns a 429 status with a Retry-After header
+- Rate limit headers are included in each response:
+  - `X-RateLimit-Limit`: Maximum requests allowed in the window
+  - `X-RateLimit-Remaining`: Remaining requests in the current window
+  - `X-RateLimit-Reset`: Unix timestamp when the rate limit resets
+
+To test rate limiting, make more than 10 requests within 15 minutes using the same device ID.
 
 ## 🤝 Contributing
 
