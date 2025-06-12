@@ -90,15 +90,45 @@ flutter run
 
 ## 🧪 Testing the API
 
+### Authentication Flow
+
+All API requests require authentication using a JWT token. The process is:
+1. Generate a unique device ID on the client (e.g., UUID).
+2. Obtain a JWT by calling the anonymous auth endpoint:
+
+```bash
+curl -X POST http://localhost:8787/api/auth/anonymous \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "test-device-123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "<JWT_TOKEN>"
+}
+```
+
+3. Use the JWT token in the Authorization header for all protected endpoints:
+
 ### Test the Backend Locally
 ```bash
 # Start local development server
 cd backend
 wrangler dev
 
-# Test the API endpoint
+# Get a JWT token
+TOKEN=$(curl -s -X POST http://localhost:8787/api/auth/anonymous \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId": "test-device-123"}' | jq -r .token)
+
+# Test the API endpoint (replace $TOKEN with the value from above if not using jq)
 curl -X POST http://localhost:8787/api/recommendations \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "query": "Find nearby restaurants that serve vegan food",
     "latitude": 40.7128,
@@ -112,8 +142,13 @@ curl http://localhost:8787/health
 ### Test Deployed Backend
 ```bash
 # Replace YOUR_WORKER_URL with your actual Cloudflare Workers URL
+TOKEN=$(curl -s -X POST https://YOUR_WORKER_URL.workers.dev/api/auth/anonymous \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId": "test-device-123"}' | jq -r .token)
+
 curl -X POST https://YOUR_WORKER_URL.workers.dev/api/recommendations \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "query": "Show me fun activities for families with kids",
     "latitude": 48.8566,
