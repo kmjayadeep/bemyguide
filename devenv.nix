@@ -8,7 +8,7 @@
     enable = true;
     flutter.enable = true;
   };
-
+  
   devcontainer.enable = true;
 
   tasks = {

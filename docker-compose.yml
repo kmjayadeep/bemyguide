@@ -1,6 +1,44 @@
 version: '3.8'
 
 services:
+  # Cloudflare Workers Backend Development
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: bemyguide-backend-dev
+    volumes:
+      - ./backend:/workspace:rw
+      - backend-node-modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=development
+      - WRANGLER_SEND_METRICS=false
+    working_dir: /workspace
+    ports:
+      - "8787:8787"  # Wrangler dev server port
+    command: npm run dev
+    stdin_open: true
+    tty: true
+
+  # Interactive backend service for debugging
+  backend-shell:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: bemyguide-backend-shell
+    volumes:
+      - ./backend:/workspace:rw
+      - backend-node-modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=development
+      - WRANGLER_SEND_METRICS=false
+    working_dir: /workspace
+    ports:
+      - "8788:8787"  # Alternative port for shell access
+    command: tail -f /dev/null
+    stdin_open: true
+    tty: true
+
   flutter-builder:
     build:
       context: .
@@ -44,4 +82,5 @@ services:
 
 volumes:
   gradle-cache:
-  flutter-cache: 
+  flutter-cache:
+  backend-node-modules: 
