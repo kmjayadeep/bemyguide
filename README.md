@@ -88,6 +88,68 @@ flutter pub get
 flutter run
 ```
 
+## 🧪 Testing the API
+
+### Test the Backend Locally
+```bash
+# Start local development server
+cd backend
+wrangler dev
+
+# Test the API endpoint
+curl -X POST http://localhost:8787/api/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Find nearby restaurants that serve vegan food",
+    "latitude": 40.7128,
+    "longitude": -74.0060
+  }'
+
+# Test health check
+curl http://localhost:8787/health
+```
+
+### Test Deployed Backend
+```bash
+# Replace YOUR_WORKER_URL with your actual Cloudflare Workers URL
+curl -X POST https://YOUR_WORKER_URL.workers.dev/api/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Show me fun activities for families with kids",
+    "latitude": 48.8566,
+    "longitude": 2.3522
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "Local Cafe & Bistro",
+      "category": "Restaurant",
+      "distance": "0.2 km",
+      "website": "https://example.com/cafe",
+      "description": "Cozy local cafe with excellent coffee and pastries"
+    },
+    {
+      "name": "Central Park",
+      "category": "Park",
+      "distance": "0.5 km",
+      "description": "Beautiful park perfect for walks and relaxation"
+    },
+    {
+      "name": "Art Museum",
+      "category": "Museum",
+      "distance": "1.2 km",
+      "website": "https://example.com/museum",
+      "description": "Contemporary art museum with rotating exhibitions"
+    }
+  ]
+}
+```
+
 ## 🏗️ Project Structure
 
 ```
