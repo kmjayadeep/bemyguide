@@ -5,7 +5,7 @@ import type { Context, Next } from "hono";
 
 interface CloudflareBindings {
   JWT_SECRET: string;
-  RATE_LIMITER: KVNamespace;
+  bmg_rate: KVNamespace;
 }
 
 interface LocationQuery {
@@ -100,13 +100,13 @@ const rateLimiter = async (c: Context, next: Next) => {
     const resetAt = now + windowMs;
     
     // Get current rate limit data from KV
-    const storedData = await c.env.RATE_LIMITER.get(key, 'json') as RateLimitData | null;
+    const storedData = await c.env.bmg_rate.get(key, 'json') as RateLimitData | null;
     
     if (storedData) {
       // Check if the window has expired
       if (now > storedData.resetAt) {
         // Reset counter for new window
-        await c.env.RATE_LIMITER.put(key, JSON.stringify({
+        await c.env.bmg_rate.put(key, JSON.stringify({
           count: 1,
           resetAt: resetAt
         }), { expirationTtl: RATE_LIMIT.WINDOW_MINUTES * 60 });
@@ -124,14 +124,14 @@ const rateLimiter = async (c: Context, next: Next) => {
         }
         
         // Increment counter
-        await c.env.RATE_LIMITER.put(key, JSON.stringify({
+        await c.env.bmg_rate.put(key, JSON.stringify({
           count: storedData.count + 1,
           resetAt: storedData.resetAt
         }), { expirationTtl: Math.ceil((storedData.resetAt - now) / 1000) });
       }
     } else {
       // First request in this window
-      await c.env.RATE_LIMITER.put(key, JSON.stringify({
+      await c.env.bmg_rate.put(key, JSON.stringify({
         count: 1,
         resetAt: resetAt
       }), { expirationTtl: RATE_LIMIT.WINDOW_MINUTES * 60 });
