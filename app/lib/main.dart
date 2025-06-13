@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
-import 'services/ai_service.dart';
+import 'services/api_service.dart';
 import 'services/location_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await ApiService.initialize();
   runApp(const MyApp());
 }
 
@@ -98,7 +99,7 @@ class _HomePageState extends State<HomePage> {
       // Now proceed with the search
       if (_currentPosition != null) {
         try {
-          final suggestions = await AiService.generateResponse(
+          final suggestions = await ApiService.getRecommendations(
             query,
             _currentPosition!.latitude,
             _currentPosition!.longitude,
@@ -498,12 +499,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.directions_walk, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                '${suggestion.distanceKm.toStringAsFixed(1)} km away',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
+              if (suggestion.distanceKm != null) ...[
+                Icon(Icons.directions_walk, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${suggestion.distanceKm!.toStringAsFixed(1)} km away',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
