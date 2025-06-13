@@ -17,8 +17,8 @@ An AI-powered local guide Flutter app that helps you discover nearby attractions
 ## 📱 Screenshots
 
 <div align="center">
-  <img src="assets/screenshots/home_screen.png" alt="BeMyGuide Home Screen" width="300"/>
-  <img src="assets/screenshots/search_results.png" alt="Search Results Screen" width="300"/>
+  <img src="assets/screenshots/home.jpeg" alt="BeMyGuide Home Screen" width="300"/>
+  <img src="assets/screenshots/search.jpeg" alt="Search Results Screen" width="300"/>
 </div>
 
 *Left: Welcome screen with search interface and example queries | Right: AI-powered search results with nearby recommendations*

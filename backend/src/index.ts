@@ -193,7 +193,7 @@ app.post("/api/recommendations", jwtAuth, rateLimiter, async (c) => {
 
     // Use AI to generate recommendations
     const aiResponse = await c.env.AI.run(
-      'workers-ai/@cf/meta/llama-3.1-8b-instruct',
+      '@cf/meta/llama-3.1-8b-instruct',
       {
         messages: [
           {
