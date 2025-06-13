@@ -199,13 +199,14 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+        toolbarHeight: 56,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/icon.png', width: 32, height: 32),
+          child: Image.asset('assets/icon.png', width: 24, height: 24),
         ),
         title: const Text(
           'BeMyGuide',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: false,
         actions: [
@@ -218,14 +219,14 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Icon(
                       Icons.location_on,
-                      size: 14,
+                      size: 12,
                       color: Colors.white.withValues(alpha: 0.9),
                     ),
                     const SizedBox(width: 4),
                     const Text(
                       'Your Location',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -235,7 +236,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
           IconButton(
-            icon: const Icon(Icons.my_location),
+            icon: const Icon(Icons.my_location, size: 20),
             onPressed: _refreshLocation,
             tooltip: 'Get location',
           ),
@@ -246,37 +247,37 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             // Welcome message
             const Text(
               'Welcome to BeMyGuide!',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               'Your AI-powered local guide. Ask me anything about nearby attractions, restaurants, or activities.',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.grey[600],
-                height: 1.4,
+                height: 1.3,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
             // Search input section
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -291,20 +292,20 @@ class _HomePageState extends State<HomePage> {
                       hintText: 'What would you like to explore?',
                       hintStyle: TextStyle(
                         color: Colors.grey[400],
-                        fontSize: 16,
+                        fontSize: 15,
                       ),
                       prefixIcon: Icon(
                         Icons.search,
                         color: Colors.teal[300],
-                        size: 24,
+                        size: 22,
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                     ),
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    style: const TextStyle(fontSize: 15, color: Colors.black87),
                     maxLines: null,
                     textInputAction: TextInputAction.search,
                   ),
@@ -314,7 +315,7 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.grey[200],
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(10.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -324,8 +325,8 @@ class _HomePageState extends State<HomePage> {
                             backgroundColor: Colors.teal,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
+                              horizontal: 20,
+                              vertical: 10,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -335,8 +336,8 @@ class _HomePageState extends State<HomePage> {
                           child:
                               _isLoading
                                   ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 18,
+                                    height: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -348,7 +349,7 @@ class _HomePageState extends State<HomePage> {
                                     'Search',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
                                   ),
                         ),
@@ -361,44 +362,44 @@ class _HomePageState extends State<HomePage> {
 
             // Place Suggestions section
             if (_suggestions.isNotEmpty) ...[
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               Text(
                 'Found ${_suggestions.length} suggestions near you:',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               ...(_suggestions
                   .map((suggestion) => _buildSuggestionCard(suggestion))
                   .toList()),
             ],
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
             // Example queries
             Text(
               'Try asking:',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[700],
               ),
             ),
-            const SizedBox(height: 16),
-            _buildExampleChip('Find nearby restaurants that serve vegan food'),
             const SizedBox(height: 12),
+            _buildExampleChip('Find nearby restaurants that serve vegan food'),
+            const SizedBox(height: 10),
             _buildExampleChip(
               'What attractions are close to Eiffel Tower that I can reach by foot?',
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _buildExampleChip(
               'Show me fun activities for a family with 10 year old kids',
             ),
 
-            const SizedBox(height: 80), // Extra space for bottom navigation
+            const SizedBox(height: 60),
           ],
         ),
       ),
@@ -738,22 +739,22 @@ class _HomePageState extends State<HomePage> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.teal[50],
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.teal[200]!),
         ),
         child: Row(
           children: [
-            Icon(Icons.lightbulb_outline, size: 18, color: Colors.teal[600]),
-            const SizedBox(width: 12),
+            Icon(Icons.lightbulb_outline, size: 16, color: Colors.teal[600]),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 text,
                 style: TextStyle(
                   color: Colors.teal[700],
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 2,
