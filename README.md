@@ -20,10 +20,10 @@ BeMyGuide uses a secure, serverless architecture with anonymous authentication:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Flutter App   │───▶│ Cloudflare      │───▶│  Cloudflare AI  │
-│ • Device ID     │    │ Workers API     │    │                 │
+│   Flutter App   │───▶│ Cloudflare      │───▶│   Workers AI    │
+│ • Device ID     │    │ Workers API     │    │ (Llama 3.1-8B)  │
 │ • JWT Token     │    │ • Rate Limiting │    │                 │
-│ • Location      │    │ • Auth & Validation │    │                 │
+│ • Location      │    │ • Auth & AI     │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                               │
                               ▼
@@ -38,19 +38,19 @@ BeMyGuide uses a secure, serverless architecture with anonymous authentication:
 - **Anonymous Auth**: Zero-friction experience - no signup required
 - **Device Identity**: Unique device ID generated on first launch
 - **JWT Tokens**: Secure API authentication with automatic refresh
-- **Rate Limiting**: 10 requests per 15 minutes per device (configurable)
-- **No Exposed Credentials**: AI API keys secured in backend only
+- **Rate Limiting**: 30 requests per 60 minutes per device (configurable)
+- **No Exposed Credentials**: AI processing handled entirely in backend
 
 ### How It Works
 1. App generates unique device ID and gets JWT token from backend
 2. User queries sent to Cloudflare Workers API with location data
-3. Backend validates request, enforces rate limits, and calls Cloudflare AI
-4. AI responses processed and returned to app with caching
+3. Backend validates request, enforces rate limits, and processes with Workers AI
+4. AI responses processed and returned to app with proper formatting
 
 ## 🛠️ Tech Stack
 
 **Frontend**: Flutter, Geolocator, HTTP client, JWT handling  
-**Backend**: Cloudflare Workers, Hono framework, Cloudflare AI  
+**Backend**: Cloudflare Workers, Hono framework, Workers AI (Llama 3.1-8B)  
 **Storage**: Cloudflare KV for sessions and rate limiting  
 **Infrastructure**: Global edge deployment with zero cold starts
 
@@ -147,7 +147,7 @@ TOKEN=$(curl -s -X POST http://localhost:8787/api/auth/anonymous \
   -d '{"deviceId": "test-device-123"}' | jq -r .token)
 
 # Make multiple requests in a loop to trigger rate limiting
-for i in {1..12}; do
+for i in {1..35}; do
   echo "Request $i:"
   curl -s -X POST http://localhost:8787/api/recommendations \
     -H "Content-Type: application/json" \
@@ -163,7 +163,7 @@ for i in {1..12}; do
 done
 ```
 
-After 10 requests, you should see a rate limit error with a 429 status code.
+After 30 requests, you should see a rate limit error with a 429 status code.
 
 ### Test Deployed Backend
 ```bash
@@ -189,23 +189,30 @@ curl -X POST https://YOUR_WORKER_URL.workers.dev/api/recommendations \
   "data": [
     {
       "name": "Local Cafe & Bistro",
+      "description": "Cozy local cafe with excellent coffee and pastries",
       "category": "Restaurant",
-      "distance": "0.2 km",
-      "website": "https://example.com/cafe",
-      "description": "Cozy local cafe with excellent coffee and pastries"
+      "distance_km": 0.2,
+      "website_url": "https://example.com/cafe",
+      "latitude": null,
+      "longitude": null
     },
     {
       "name": "Central Park",
+      "description": "Beautiful park perfect for walks and relaxation",
       "category": "Park",
-      "distance": "0.5 km",
-      "description": "Beautiful park perfect for walks and relaxation"
+      "distance_km": 0.5,
+      "website_url": null,
+      "latitude": null,
+      "longitude": null
     },
     {
       "name": "Art Museum",
+      "description": "Contemporary art museum with rotating exhibitions",
       "category": "Museum",
-      "distance": "1.2 km",
-      "website": "https://example.com/museum",
-      "description": "Contemporary art museum with rotating exhibitions"
+      "distance_km": 1.2,
+      "website_url": "https://example.com/museum",
+      "latitude": null,
+      "longitude": null
     }
   ]
 }
@@ -219,16 +226,13 @@ curl -X POST https://YOUR_WORKER_URL.workers.dev/api/recommendations \
 │   │   ├── main.dart         # Main app entry point
 │   │   └── services/
 │   │       ├── api_service.dart      # Backend API integration
-│   │       ├── auth_service.dart     # Anonymous authentication
 │   │       └── location_service.dart # GPS handling
 │   └── pubspec.yaml
 │
 ├── backend/                   # Cloudflare Workers backend
 │   ├── src/
-│   │   ├── index.js          # Main Workers entry point
-│   │   ├── auth/             # Authentication middleware
-│   │   └── routes/           # API route handlers
-│   ├── wrangler.toml         # Workers configuration
+│   │   ├── index.ts          # Main Workers entry point with AI integration
+│   ├── wrangler.jsonc        # Workers configuration
 │   └── package.json
 ```
 
@@ -249,15 +253,15 @@ Try asking BeMyGuide:
 
 ## ⚙️ Configuration
 
-**Rate Limiting**: 10 requests/15min (configurable in `wrangler.jsonc`)  
-**AI Model**: `@cf/meta/llama-3.1-8b-instruct` (configurable)  
+**Rate Limiting**: 30 requests/60min (configurable in backend)  
+**AI Model**: `workers-ai/@cf/meta/llama-3.1-8b-instruct` (Workers AI)  
 **Deployment**: `wrangler deploy --env production`
 
 ### Rate Limiting
 
 The app implements device-based rate limiting:
 
-- Each device is limited to 10 requests per 15-minute window
+- Each device is limited to 30 requests per 60-minute window
 - Rate limits are tracked in Cloudflare KV using the device ID as the key
 - When rate limit is exceeded, the API returns a 429 status with a Retry-After header
 - Rate limit headers are included in each response:
@@ -265,7 +269,7 @@ The app implements device-based rate limiting:
   - `X-RateLimit-Remaining`: Remaining requests in the current window
   - `X-RateLimit-Reset`: Unix timestamp when the rate limit resets
 
-To test rate limiting, make more than 10 requests within 15 minutes using the same device ID.
+To test rate limiting, make more than 30 requests within 60 minutes using the same device ID.
 
 ## 🤝 Contributing
 
