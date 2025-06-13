@@ -14,6 +14,15 @@ An AI-powered local guide Flutter app that helps you discover nearby attractions
 - **⚡ Rate Limited**: Smart rate limiting per user to ensure fair usage
 - **🛡️ Secure**: Backend-first architecture with no exposed API credentials
 
+## 📱 Screenshots
+
+<div align="center">
+  <img src="assets/screenshots/home_screen.png" alt="BeMyGuide Home Screen" width="300"/>
+  <img src="assets/screenshots/search_results.png" alt="Search Results Screen" width="300"/>
+</div>
+
+*Left: Welcome screen with search interface and example queries | Right: AI-powered search results with nearby recommendations*
+
 ## 🏗️ Architecture
 
 BeMyGuide uses a secure, serverless architecture with anonymous authentication:
