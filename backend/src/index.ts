@@ -6,6 +6,7 @@ import type { Context, Next } from "hono";
 interface CloudflareBindings {
   JWT_SECRET: string;
   bmg_rate: KVNamespace;
+  AI: any; // Cloudflare AI binding
 }
 
 interface LocationQuery {
@@ -16,10 +17,12 @@ interface LocationQuery {
 
 interface PlaceRecommendation {
   name: string;
-  category: "Restaurant" | "Park" | "Museum" | "Activity" | "Landmark" | "Shopping";
-  distance: string;
-  website?: string;
   description: string;
+  category: "Restaurant" | "Park" | "Museum" | "Activity" | "Landmark" | "Shopping" | "Other";
+  distance_km?: number | null;
+  website_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface ApiResponse {
@@ -158,6 +161,7 @@ const rateLimiter = async (c: Context, next: Next) => {
 app.post("/api/recommendations", jwtAuth, rateLimiter, async (c) => {
   try {
     const body = await c.req.json() as LocationQuery;
+    
     // Validate request body
     if (!body.query || typeof body.query !== 'string') {
       return c.json<ApiResponse>({
@@ -165,57 +169,83 @@ app.post("/api/recommendations", jwtAuth, rateLimiter, async (c) => {
         error: "Query is required and must be a string"
       }, 400);
     }
+    
     if (typeof body.latitude !== 'number' || typeof body.longitude !== 'number') {
       return c.json<ApiResponse>({
         success: false,
         error: "Valid latitude and longitude are required"
       }, 400);
     }
+    
     if (body.latitude < -90 || body.latitude > 90) {
       return c.json<ApiResponse>({
         success: false,
         error: "Latitude must be between -90 and 90"
       }, 400);
     }
+    
     if (body.longitude < -180 || body.longitude > 180) {
       return c.json<ApiResponse>({
         success: false,
         error: "Longitude must be between -180 and 180"
       }, 400);
     }
-    // TODO: This will be replaced with actual AI processing
-    // For now, return mock data to test the API structure
-    const mockRecommendations: PlaceRecommendation[] = [
+
+    // Use AI to generate recommendations
+    const aiResponse = await c.env.AI.run(
+      'workers-ai/@cf/meta/llama-3.1-8b-instruct',
       {
-        name: "Local Cafe & Bistro",
-        category: "Restaurant",
-        distance: "0.2 km",
-        website: "https://example.com/cafe",
-        description: "Cozy local cafe with excellent coffee and pastries"
-      },
-      {
-        name: "Central Park",
-        category: "Park",
-        distance: "0.5 km",
-        description: "Beautiful park perfect for walks and relaxation"
-      },
-      {
-        name: "Art Museum",
-        category: "Museum",
-        distance: "1.2 km",
-        website: "https://example.com/museum",
-        description: "Contemporary art museum with rotating exhibitions"
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a local guide assistant named \'bemyguide\'. Your task is to find relevant places for the user based on their query and location. ALWAYS respond with a valid JSON object containing a single key \'suggestions\' which is an array of places. Each place must have the following keys: \'name\', \'description\', \'category\', \'distance_km\', \'website_url\', \'latitude\', and \'longitude\'. The \'description\' should be a concise, one-sentence summary. The \'distance_km\' should be the approximate distance in kilometers from the user\'s location to the suggested place. If you cannot find a website, set \'website_url\' to null. If you cannot find the exact coordinates, set \'latitude\' and \'longitude\' to null. The \'category\' should be one of: \'Park\', \'Restaurant\', \'Museum\', \'Activity\', \'Landmark\', \'Shopping\', \'Other\'. Do not include any text outside of the JSON object.'
+          },
+          {
+            role: 'user',
+            content: `User query: '${body.query}'. My current location is latitude ${body.latitude} and longitude ${body.longitude}.`
+          }
+        ],
+        max_tokens: 800,
+        temperature: 0.3
       }
-    ];
+    );
+
+    // Parse the AI response
+    let aiResponseText = '';
+    if (aiResponse.response) {
+      aiResponseText = aiResponse.response;
+    } else if (aiResponse.choices && aiResponse.choices.length > 0) {
+      aiResponseText = aiResponse.choices[0].message.content;
+    } else {
+      throw new Error('Unexpected AI response format');
+    }
+
+    // Parse the JSON response from AI
+    const jsonResponse = JSON.parse(aiResponseText);
+    if (!jsonResponse.suggestions || !Array.isArray(jsonResponse.suggestions)) {
+      throw new Error('AI response does not contain valid suggestions array');
+    }
+
+    const suggestions: PlaceRecommendation[] = jsonResponse.suggestions.map((place: any) => ({
+      name: place.name || '',
+      description: place.description || '',
+      category: place.category || 'Other',
+      distance_km: typeof place.distance_km === 'number' ? place.distance_km : null,
+      website_url: place.website_url || null,
+      latitude: typeof place.latitude === 'number' ? place.latitude : null,
+      longitude: typeof place.longitude === 'number' ? place.longitude : null
+    }));
+
     return c.json<ApiResponse>({
       success: true,
-      data: mockRecommendations
+      data: suggestions
     });
+
   } catch (error) {
     console.error("Error processing request:", error);
     return c.json<ApiResponse>({
       success: false,
-      error: "Internal server error"
+      error: "Failed to process your request. Please try again."
     }, 500);
   }
 });

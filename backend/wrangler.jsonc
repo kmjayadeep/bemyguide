@@ -13,7 +13,10 @@
           "binding": "bmg_rate",
           "id": "15dca02380b947b7b3e12939ef668e73"
         }
-      ]
+      ],
+	  "ai": {
+		"binding": "AI"
+	  },
     },
     "production": {
       "kv_namespaces": [
@@ -21,7 +24,10 @@
           "binding": "bmg_rate",
           "id": "a541886710dd46c398e943da1d684490"
         }
-      ]
+      ],
+	  "ai": {
+		"binding": "AI"
+	  },
     }
   }
 }
