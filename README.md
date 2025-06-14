@@ -240,7 +240,19 @@ curl -X POST https://YOUR_WORKER_URL.workers.dev/api/recommendations \
 │
 ├── backend/                   # Cloudflare Workers backend
 │   ├── src/
-│   │   ├── index.ts          # Main Workers entry point with AI integration
+│   │   ├── index.ts          # Main Workers entry point
+│   │   ├── types/
+│   │   │   └── index.ts      # TypeScript interfaces and types
+│   │   ├── services/
+│   │   │   ├── auth.ts       # JWT token generation/validation
+│   │   │   ├── aiService.ts  # AI/LLM integration logic
+│   │   │   └── rateLimiter.ts # Rate limiting business logic
+│   │   ├── middleware/
+│   │   │   ├── auth.ts       # JWT authentication middleware
+│   │   │   └── rateLimiter.ts # Rate limiting middleware
+│   │   └── routes/
+│   │       ├── auth.ts       # Authentication endpoints
+│   │       └── recommendations.ts # AI recommendations endpoints
 │   ├── wrangler.jsonc        # Workers configuration
 │   └── package.json
 ```
@@ -301,4 +313,4 @@ This project is open source and available under the [MIT License](LICENSE).
 - Project Link: [https://github.com/kmjayadeep/bemyguide](https://github.com/kmjayadeep/bemyguide)
 
 ---
-*Made with ❤️ using Flutter and Cloudflare Workers* 
+*Made with ❤️ using Flutter and Cloudflare Workers*
