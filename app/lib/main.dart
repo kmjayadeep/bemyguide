@@ -371,7 +371,37 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.grey[700],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              // AI Disclaimer Warning
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: Colors.amber[700],
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'These recommendations are AI-generated and may not be completely accurate. Please verify details before visiting.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.amber[800],
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               ...(_suggestions
                   .map((suggestion) => _buildSuggestionCard(suggestion))
                   .toList()),
