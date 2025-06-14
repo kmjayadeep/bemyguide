@@ -15,9 +15,7 @@ export interface PlaceRecommendation {
   description: string;
   category: "Restaurant" | "Park" | "Museum" | "Activity" | "Landmark" | "Shopping" | "Other";
   distance_km?: number | null;
-  website_url?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  google_maps_url: string;
 }
 
 export interface ApiResponse {
