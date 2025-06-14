@@ -533,12 +533,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Google Maps button
               GestureDetector(
-                onTap:
-                    () => _openGoogleMaps(
-                      suggestion.name,
-                      suggestion.latitude,
-                      suggestion.longitude,
-                    ),
+                onTap: () => _openGoogleMaps(suggestion.googleMapsUrl),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -554,7 +549,7 @@ class _HomePageState extends State<HomePage> {
                       const Icon(Icons.map, size: 14, color: Colors.white),
                       const SizedBox(width: 5),
                       const Text(
-                        'Maps',
+                        'Open in Maps',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -565,37 +560,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              if (suggestion.websiteUrl != null) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _openWebsite(suggestion.websiteUrl!),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.teal[600],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.link, size: 14, color: Colors.white),
-                        const SizedBox(width: 5),
-                        const Text(
-                          'Website',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ],
@@ -622,70 +586,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _openWebsite(String url) async {
-    try {
-      final uri = Uri.parse(url);
-      final canLaunch = await canLaunchUrl(uri);
-
-      if (canLaunch) {
-        final launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-
-        if (!launched) {
-          await launchUrl(uri, mode: LaunchMode.platformDefault);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Cannot open website: $url'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error opening website: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _openGoogleMaps(
-    String placeName,
-    double? latitude,
-    double? longitude,
-  ) async {
-    String googleMapsUrl;
-
-    if (latitude != null && longitude != null) {
-      // Use coordinates for precise location
-      googleMapsUrl =
-          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-    } else {
-      // Fallback to search by name
-      final encodedName = Uri.encodeComponent(placeName);
-      googleMapsUrl =
-          'https://www.google.com/maps/search/?api=1&query=$encodedName';
-    }
-
+  Future<void> _openGoogleMaps(String googleMapsUrl) async {
     try {
       final uri = Uri.parse(googleMapsUrl);
       final canLaunch = await canLaunchUrl(uri);

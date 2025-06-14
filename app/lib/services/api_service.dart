@@ -10,18 +10,14 @@ class PlaceSuggestion {
   final String description;
   final String category;
   final double? distanceKm;
-  final String? websiteUrl;
-  final double? latitude;
-  final double? longitude;
+  final String googleMapsUrl;
 
   PlaceSuggestion({
     required this.name,
     required this.description,
     required this.category,
     this.distanceKm,
-    this.websiteUrl,
-    this.latitude,
-    this.longitude,
+    required this.googleMapsUrl,
   });
 
   factory PlaceSuggestion.fromJson(Map<String, dynamic> json) {
@@ -33,15 +29,7 @@ class PlaceSuggestion {
           json['distance_km'] != null
               ? (json['distance_km'] as num).toDouble()
               : null,
-      websiteUrl: json['website_url'] as String?,
-      latitude:
-          json['latitude'] != null
-              ? (json['latitude'] as num).toDouble()
-              : null,
-      longitude:
-          json['longitude'] != null
-              ? (json['longitude'] as num).toDouble()
-              : null,
+      googleMapsUrl: json['google_maps_url'] as String,
     );
   }
 }
